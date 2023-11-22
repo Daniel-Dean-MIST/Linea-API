@@ -1,2 +1,0 @@
-# print(len('0xa6d090219a9ff78feae7706070c6c35094a874b5eaf004ddf847bbf65d9638b6'))
-print(len('0x66bca7cf409fcee40eee60e39cd2dbd6c09d791bc9621f23dae2df9a31a03d54'))
