@@ -1,0 +1,7 @@
+flask
+request
+jsonify
+web3
+web3.middleware
+pandas
+json

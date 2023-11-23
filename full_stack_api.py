@@ -3,8 +3,7 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 import pandas as pd
 import json
-import requests
-import threading
+import gunicorn
 
 app = Flask(__name__)
 
@@ -261,7 +260,7 @@ def get_transactions():
     return json.dumps(response), 200
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
 
 # @app.route("/transactions/<address>", methods=["POST"])
 # def get_txns():
