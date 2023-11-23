@@ -7,7 +7,7 @@ import json
 app = Flask(__name__)
 
 # Replace with the actual Optimism RPC URL
-optimism_rpc_url = 'infura_linea_key'
+optimism_rpc_url = 'enter_your_infura_key_here_in_quotes'
 
 # Create a Web3 instance to connect to the Optimism blockchain
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
@@ -135,8 +135,12 @@ def get_borrow_transactions(user_address, contract):
     from_block = 0
 
     events = contract.events.Borrow.get_logs(fromBlock=from_block, toBlock='latest')
-
-    df = user_data(user_address, events, 'BORROW')
+    
+    if len(events) > 1:
+        try:
+            df = user_data(user_address, events, 'BORROW')
+        except:
+            df = pd.DataFrame()
 
     return df
 
@@ -149,7 +153,11 @@ def get_lend_transactions(user_address, contract):
 
     events = contract.events.Deposit.get_logs(fromBlock=from_block, toBlock='latest')
 
-    df = user_data(user_address, events, 'LEND')
+    if len(events) > 1:
+        try:
+            df = user_data(user_address, events, 'LEND')
+        except:
+            df = pd.DataFrame()
 
     return df
 
@@ -161,8 +169,12 @@ def get_repay_transactions(user_address, contract):
     from_block = 0
 
     events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
-
-    df = user_data(user_address, events, 'REPAY')
+    
+    if len(events) > 1:
+        try:
+            df = user_data(user_address, events, 'REPAY')
+        except:
+            df = pd.DataFrame()
 
     return df
 
@@ -174,7 +186,11 @@ def get_collateralalise_transactions(user_address, contract):
 
     events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=from_block, toBlock='latest')
 
-    df = user_data(user_address, events, 'COLLATERALISE')
+    if len(events) > 1:
+        try:
+            df = user_data(user_address, events, 'COLLATERALISE')
+        except:
+            df = pd.DataFrame()
 
     return df
 
