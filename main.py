@@ -3,7 +3,6 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 import pandas as pd
 import json
-import gunicorn
 
 app = Flask(__name__)
 
