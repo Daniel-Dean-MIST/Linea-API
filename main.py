@@ -198,6 +198,7 @@ def get_collateralalise_transactions(user_address, contract):
     return df
 
 #takes in our user address and will populate all the needed fields for our api_response
+@cache
 def get_all_user_transactions(user_address):
     df = pd.DataFrame()
 
