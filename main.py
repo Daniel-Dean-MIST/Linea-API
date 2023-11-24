@@ -247,18 +247,18 @@ def make_api_response_string(df):
     
     return response
 
-# @app.route("/transactions/<address>", methods=["GET"])
-# def balance_of(address):
+@app.route("/test/<address>", methods=["GET"])
+def balance_of(address):
     
-#     df = get_all_user_transactions(address)
-#     # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
+    df = get_all_user_transactions(address)
+    # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
 
-#     response = make_api_response_string(df)
+    response = make_api_response_string(df)
 
-#     # print(type(response))
-#     # Return the balance in JSON format
-#     return jsonify(response)
-#     # return json.dumps(response), 200
+    # print(type(response))
+    # Return the balance in JSON format
+    return jsonify(response)
+    # return json.dumps(response), 200
 
 @app.route("/transactions/", methods=["POST"])
 def get_transactions():
