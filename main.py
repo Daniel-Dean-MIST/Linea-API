@@ -133,12 +133,14 @@ def user_data(user_address, events, enum_name):
 #gets all of our borrow transactions
 def get_borrow_transactions(user_address, contract):
 
+    df = pd.DataFrame()
+
     latest_block = web3.eth.get_block_number()
     from_block = latest_block - 100000
     from_block = 0
 
     events = contract.events.Borrow.get_logs(fromBlock=from_block, toBlock='latest')
-    
+
     if len(events) > 1:
         try:
             df = user_data(user_address, events, 'BORROW')
@@ -149,6 +151,8 @@ def get_borrow_transactions(user_address, contract):
 
 #gets all of our deposit transactions
 def get_lend_transactions(user_address, contract):
+    
+    df = pd.DataFrame()
 
     latest_block = web3.eth.get_block_number()
     from_block = latest_block - 100000
@@ -167,12 +171,14 @@ def get_lend_transactions(user_address, contract):
 #gets all of our repayment transactions
 def get_repay_transactions(user_address, contract):
 
+    df = pd.DataFrame()
+
     latest_block = web3.eth.get_block_number()
     from_block = latest_block - 100000
     from_block = 0
 
     events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
-    
+
     if len(events) > 1:
         try:
             df = user_data(user_address, events, 'REPAY')
@@ -183,6 +189,8 @@ def get_repay_transactions(user_address, contract):
 
 def get_collateralalise_transactions(user_address, contract):
     
+    df = pd.DataFrame()
+
     latest_block = web3.eth.get_block_number()
     from_block = latest_block - 100000
     from_block = 0
@@ -194,45 +202,61 @@ def get_collateralalise_transactions(user_address, contract):
             df = user_data(user_address, events, 'COLLATERALISE')
         except:
             df = pd.DataFrame()
-
     return df
 
 #takes in our user address and will populate all the needed fields for our api_response
 @cache
 def get_all_user_transactions(user_address):
+
     df = pd.DataFrame()
 
     df_list = []
 
-    contract = get_contract()
+    if len(user_address) >= 42:
+        contract = get_contract()
 
-    borrow_df = get_borrow_transactions(user_address, contract)
-    lend_df = get_lend_transactions(user_address, contract)
-    repay_df = get_repay_transactions(user_address, contract)
-    collateralize_df = get_collateralalise_transactions(user_address, contract)
+        borrow_df = get_borrow_transactions(user_address, contract)
+        lend_df = get_lend_transactions(user_address, contract)
+        repay_df = get_repay_transactions(user_address, contract)
+        collateralize_df = get_collateralalise_transactions(user_address, contract)
 
-    df_list = [borrow_df, lend_df, repay_df, collateralize_df]
+        df_list = [borrow_df, lend_df, repay_df, collateralize_df]
 
-    df = pd.concat(df_list)
+        df = pd.concat(df_list)
 
 
     return df
 
 # formats our dataframe response
 def make_api_response_string(df):
-    temp_df = df[['txHash', 'timestamp', 'tokenAddress', 'tokenVolume', 'tokenUSDAmount', 'lendBorrowType']]
-    # Process data
+    
     data = []
-    for i in range(temp_df.shape[0]):
-        row = temp_df.iloc[i]
+
+    #if we have an address with no transactions
+    if len(df) < 1:
+        temp_df = pd.DataFrame()
         data.append({
-            "txHash": str(row['txHash']),
-            "timestamp": int(row['timestamp']),
-            "tokenAddress": str(row['tokenAddress']),
-            "tokenVolume": str(row['tokenVolume']),
-            "tokenUSDAmount": float(row['tokenUSDAmount']),
-            "lendBorrowType": str(row['lendBorrowType'])
+           "txHash": 'N/A',
+            "timestamp": -1,
+            "tokenAddress": 'N/A',
+            "tokenVolume": '-1',
+            "tokenUSDAmount": -1,
+            "lendBorrowType": 'N/A'
         })
+
+    else:
+        temp_df = df[['txHash', 'timestamp', 'tokenAddress', 'tokenVolume', 'tokenUSDAmount', 'lendBorrowType']]
+        # Process data
+        for i in range(temp_df.shape[0]):
+            row = temp_df.iloc[i]
+            data.append({
+                "txHash": str(row['txHash']),
+                "timestamp": int(row['timestamp']),
+                "tokenAddress": str(row['tokenAddress']),
+                "tokenVolume": str(row['tokenVolume']),
+                "tokenUSDAmount": float(row['tokenUSDAmount']),
+                "lendBorrowType": str(row['lendBorrowType'])
+            })
 
     # Create JSON response
     response = {
@@ -282,30 +306,3 @@ def get_transactions():
 
 if __name__ == "__main__":
     app.run()
-
-# @app.route("/transactions/<address>", methods=["POST"])
-# def get_txns():
-#     data = json.loads(request.data)
-#     address = data['address'].lower()
-
-#     df = get_all_user_transactions(address)
-#     # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
-
-#     response = make_api_response_string(df)
-
-#     print(type(response))
-#     # Return the balance in JSON format
-#     # return jsonify(out)
-#     return json.dumps(response)
-
-# if __name__ == "__main__":
-#     api_thread = threading.Thread(target=app.run(debug=True))
-#     api_thread.start()
-
-#     # app.run(debug=True)
-
-#     data = {"address": "0x7B901f40228fC5cA87A288a7C1E88Bc439741fCF"}
-#     # response = requests.post('http://127.0.0.1:5000/transactions/', data=data)
-#     response = requests.post('http://127.0.0.1:5000/transactions/', data=json.dumps({'address': '0x7B901f40228fC5cA87A288a7C1E88Bc439741fCF'}))
-#     print(response.text)
-#     api_thread.join()
