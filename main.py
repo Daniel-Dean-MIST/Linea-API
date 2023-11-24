@@ -212,7 +212,7 @@ def get_all_user_transactions(user_address):
 
     df_list = []
 
-    if len(user_address) >= 42:
+    if len(user_address) == 42:
         contract = get_contract()
 
         borrow_df = get_borrow_transactions(user_address, contract)
