@@ -8,7 +8,7 @@ from functools import cache
 app = Flask(__name__)
 
 # Replace with the actual Optimism RPC URL
-optimism_rpc_url = 'enter_your_linea_infura_api_key_here'
+optimism_rpc_url = 'enter_infura_linea_url'
 
 # Create a Web3 instance to connect to the Optimism blockchain
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
@@ -82,12 +82,12 @@ def user_data(user_address, events, enum_name):
             user = 'user'
         else:
             user = 'onBehalfOf'
-        
+
         if enum_name != 'COLLATERALISE':
-            if event['args'][user] == user_address:
+            if event['args'][user].lower() == user_address:
                 block = web3.eth.get_block(event['blockNumber'])
 
-                user_address_list.append(event['args'][user])
+                user_address_list.append(event['args'][user].lower())
                 tx_hash_list.append(event['transactionHash'].hex())
                 timestamp_list.append(block['timestamp'])
                 token_address_list.append(event['args']['reserve'])
@@ -96,10 +96,10 @@ def user_data(user_address, events, enum_name):
                 lend_borrow_type_list.append(enum_name)
         
         else:
-            if event['args'][user] == user_address:
+            if event['args'][user].lower() == user_address:
                 block = web3.eth.get_block(event['blockNumber'])
 
-                user_address_list.append(event['args'][user])
+                user_address_list.append(event['args'][user].lower())
                 tx_hash_list.append(event['transactionHash'].hex())
                 timestamp_list.append(block['timestamp'])
                 token_address_list.append(event['args']['reserve'])
