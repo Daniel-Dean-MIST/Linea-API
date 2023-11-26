@@ -79,7 +79,7 @@ def user_data(user_address, events, enum_name):
         # print(f"Block Number: {event['blockNumber']}:")
         # print(f"{event['args']['onBehalfOf']}")
         if enum_name == 'REPAY':
-            user = 'repayer'
+            user = 'user'
         elif enum_name == 'COLLATERALISE':
             user = 'user'
         else:
@@ -186,7 +186,7 @@ def get_repay_transactions(user_address, contract):
             df = user_data(user_address, events, 'REPAY')
         except:
             df = pd.DataFrame()
-
+    
     return df
 
 def get_collateralalise_transactions(user_address, contract):
