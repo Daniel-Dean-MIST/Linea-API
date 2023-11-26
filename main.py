@@ -5,11 +5,12 @@ import pandas as pd
 import json
 from functools import cache
 import threading 
+import queue
 
 app = Flask(__name__)
 
 # Replace with the actual Optimism RPC URL
-optimism_rpc_url = 'infura_key'
+optimism_rpc_url = 'https://linea-mainnet.infura.io/v3/e2b4d9fa19c748489fb6c0d6bf411be4'
 
 # Create a Web3 instance to connect to the Optimism blockchain
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
@@ -273,13 +274,13 @@ def make_api_response_string(df):
     return response
 
 # executes all of functions
-def search_and_respond():
+def search_and_respond(address, queue):
     # data = request.get_json()
-    data = json.loads(request.data)  # Parse JSON string into JSON object
+    # data = json.loads(request.data)  # Parse JSON string into JSON object
 
-    print(data)
-    address = data['address']
-    print(address)
+    # print(data)
+    # address = data['address']
+    # print(address)
 
     # thread = threading.Thread(target=get_all_user_transactions, args=(address,))
     # thread.start()
@@ -293,7 +294,11 @@ def search_and_respond():
     # print(type(response))
     # Return the balance in JSON format
     # return jsonify(out)
-    return jsonify(response), 200
+    # return jsonify(response), 200
+
+    queue.put(response)
+
+    # return response
 
 @app.route("/test/<address>", methods=["GET"])
 def balance_of(address):
@@ -311,8 +316,24 @@ def balance_of(address):
 @app.route("/transactions/", methods=["POST"])
 def get_transactions():
 
-    response = search_and_respond()
-    return response
+    # response = search_and_respond()
+    # return response
+
+    data = json.loads(request.data)  # Parse JSON string into JSON object
+
+    print(data)
+    address = data['address']
+    print(address)
+
+    # Create a queue to store the search result
+    result_queue = queue.Queue()
+
+    thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
+    thread.start()
+    
+    response = result_queue.get()
+
+    return jsonify(response), 200
 
 if __name__ == "__main__":
     app.run()
