@@ -300,6 +300,20 @@ def search_and_respond(address, queue):
 
     # return response
 
+# @app.route("/test/<address>", methods=["GET"])
+# def balance_of(address):
+    
+#     df = get_all_user_transactions(address)
+#     # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
+
+#     response = make_api_response_string(df)
+
+#     # print(type(response))
+#     # Return the balance in JSON format
+#     return jsonify(response)
+#     # return json.dumps(response), 200
+
+#get v2
 @app.route("/test/<address>", methods=["GET"])
 def balance_of(address):
     
@@ -308,10 +322,15 @@ def balance_of(address):
 
     response = make_api_response_string(df)
 
-    # print(type(response))
-    # Return the balance in JSON format
-    return jsonify(response)
-    # return json.dumps(response), 200
+    # Create a queue to store the search result
+    result_queue = queue.Queue()
+
+    thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
+    thread.start()
+    
+    response = result_queue.get()
+
+    return jsonify(response), 200
 
 @app.route("/transactions/", methods=["POST"])
 def get_transactions():
