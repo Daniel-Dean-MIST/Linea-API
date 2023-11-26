@@ -4,11 +4,12 @@ from web3.middleware import geth_poa_middleware
 import pandas as pd
 import json
 from functools import cache
+import threading 
 
 app = Flask(__name__)
 
 # Replace with the actual Optimism RPC URL
-optimism_rpc_url = 'enter_infura_linea_url'
+optimism_rpc_url = 'infura_key'
 
 # Create a Web3 instance to connect to the Optimism blockchain
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
@@ -271,6 +272,29 @@ def make_api_response_string(df):
     
     return response
 
+# executes all of functions
+def search_and_respond():
+    # data = request.get_json()
+    data = json.loads(request.data)  # Parse JSON string into JSON object
+
+    print(data)
+    address = data['address']
+    print(address)
+
+    # thread = threading.Thread(target=get_all_user_transactions, args=(address,))
+    # thread.start()
+
+    df = get_all_user_transactions(address)
+    # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
+
+    response = make_api_response_string(df)
+
+
+    # print(type(response))
+    # Return the balance in JSON format
+    # return jsonify(out)
+    return jsonify(response), 200
+
 @app.route("/test/<address>", methods=["GET"])
 def balance_of(address):
     
@@ -286,23 +310,9 @@ def balance_of(address):
 
 @app.route("/transactions/", methods=["POST"])
 def get_transactions():
-    # data = request.get_json()
-    data = json.loads(request.data)  # Parse JSON string into JSON object
 
-    print(data)
-    address = data['address']
-    print(address)
-
-    df = get_all_user_transactions(address)
-    # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
-
-    response = make_api_response_string(df)
-
-
-    # print(type(response))
-    # Return the balance in JSON format
-    # return jsonify(out)
-    return jsonify(response), 200
+    response = search_and_respond()
+    return response
 
 if __name__ == "__main__":
     app.run()
