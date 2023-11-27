@@ -75,6 +75,7 @@ def user_data(user_address, events, enum_name):
 
     for event in events:
         # print(event)
+        # print(type(event))
         # print(event.args)
         # print(event)
         # print(f"Block Number: {event['blockNumber']}:")
@@ -136,16 +137,65 @@ def user_data(user_address, events, enum_name):
 
     return df
 
-#gets all of our borrow transactions
-def get_borrow_transactions(user_address, contract):
-
-    df = pd.DataFrame()
-
+#gets all borrow events
+@cache
+def get_borrow_events(contract):
     latest_block = web3.eth.get_block_number()
     from_block = latest_block - 100000
     from_block = 0
 
     events = contract.events.Borrow.get_logs(fromBlock=from_block, toBlock='latest')
+
+    return events
+
+#gets all deposit events
+@cache
+def get_lend_events(contract):
+    latest_block = web3.eth.get_block_number()
+    from_block = latest_block - 100000
+    from_block = 0
+
+    events = contract.events.Deposit.get_logs(fromBlock=from_block, toBlock='latest')
+
+    return events
+
+#gets all repay events
+@cache
+def get_repay_events(contract):
+    latest_block = web3.eth.get_block_number()
+    from_block = latest_block - 100000
+    from_block = 0
+
+    events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
+
+    return events
+
+#gets all collateralise events
+@cache
+def get_collateralise_events(contract):
+    latest_block = web3.eth.get_block_number()
+    from_block = latest_block - 100000
+    from_block = 0
+
+    events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=from_block, toBlock='latest')
+
+    return events
+
+
+#gets all of our borrow transactions
+# @cache
+def get_borrow_transactions(user_address, contract):
+
+    df = pd.DataFrame()
+
+    # latest_block = web3.eth.get_block_number()
+    # from_block = latest_block - 100000
+    # from_block = 0
+
+    start_time = time.time()
+    # events = contract.events.Borrow.get_logs(fromBlock=from_block, toBlock='latest')
+    events = get_borrow_events(contract)
+    print('Events found in: ', time.time() - start_time)
 
     if len(events) > 1:
         try:
@@ -156,15 +206,17 @@ def get_borrow_transactions(user_address, contract):
     return df
 
 #gets all of our deposit transactions
+# @cache
 def get_lend_transactions(user_address, contract):
     
     df = pd.DataFrame()
 
-    latest_block = web3.eth.get_block_number()
-    from_block = latest_block - 100000
-    from_block = 0
+    # latest_block = web3.eth.get_block_number()
+    # from_block = latest_block - 100000
+    # from_block = 0
 
-    events = contract.events.Deposit.get_logs(fromBlock=from_block, toBlock='latest')
+    # events = contract.events.Deposit.get_logs(fromBlock=from_block, toBlock='latest')
+    events = get_lend_events(contract)
 
     if len(events) > 1:
         try:
@@ -175,15 +227,18 @@ def get_lend_transactions(user_address, contract):
     return df
 
 #gets all of our repayment transactions
+# @cache
 def get_repay_transactions(user_address, contract):
 
     df = pd.DataFrame()
 
-    latest_block = web3.eth.get_block_number()
-    from_block = latest_block - 100000
-    from_block = 0
+    # latest_block = web3.eth.get_block_number()
+    # from_block = latest_block - 100000
+    # from_block = 0
 
-    events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
+    # events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
+
+    events = get_repay_events(contract)
 
     if len(events) > 1:
         try:
@@ -193,6 +248,7 @@ def get_repay_transactions(user_address, contract):
     
     return df
 
+# @cache
 def get_collateralalise_transactions(user_address, contract):
     
     df = pd.DataFrame()
@@ -201,8 +257,9 @@ def get_collateralalise_transactions(user_address, contract):
     from_block = latest_block - 100000
     from_block = 0
 
-    events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=from_block, toBlock='latest')
-
+    # events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=from_block, toBlock='latest')
+    
+    events = get_collateralise_events(contract)
     if len(events) > 1:
         try:
             df = user_data(user_address, events, 'COLLATERALISE')
@@ -221,10 +278,18 @@ def get_all_user_transactions(user_address):
     if len(user_address) == 42:
         contract = get_contract()
 
+        start_time = time.time()
         borrow_df = get_borrow_transactions(user_address, contract)
+        print('Borrower Transactions found in: ', time.time() - start_time)
+        start_time = time.time()
         lend_df = get_lend_transactions(user_address, contract)
+        print('Lend Transactions found in: ', time.time() - start_time)
+        start_time = time.time()
         repay_df = get_repay_transactions(user_address, contract)
+        print('Repay Transactions found in: ', time.time() - start_time)
+        start_time = time.time()
         collateralize_df = get_collateralalise_transactions(user_address, contract)
+        print('Collaterise Transactions found in: ', time.time() - start_time)
 
         df_list = [borrow_df, lend_df, repay_df, collateralize_df]
 
