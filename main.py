@@ -6,6 +6,7 @@ import json
 from functools import cache
 import threading 
 import queue
+import time
 
 app = Flask(__name__)
 
@@ -85,6 +86,9 @@ def user_data(user_address, events, enum_name):
         else:
             user = 'onBehalfOf'
 
+        # block = web3.eth.get_block(event['blockNumber'])
+
+        # if block['timestamp'] >= 1701086400:
         if enum_name != 'COLLATERALISE':
             if event['args'][user].lower() == user_address:
                 block = web3.eth.get_block(event['blockNumber'])
