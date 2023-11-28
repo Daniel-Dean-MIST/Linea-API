@@ -73,11 +73,13 @@ def user_data(user_address, events, enum_name):
 
     user = ''
 
+    start_time = time.time()
     for event in events:
         # print(event)
         # print(type(event))
         # print(event.args)
-        # print(event)
+        # print(event['args'].user)
+        # print(type(event['args'].user))
         # print(f"Block Number: {event['blockNumber']}:")
         # print(f"{event['args']['onBehalfOf']}")
         if enum_name == 'REPAY':
@@ -88,7 +90,6 @@ def user_data(user_address, events, enum_name):
             user = 'onBehalfOf'
 
         # block = web3.eth.get_block(event['blockNumber'])
-
         # if block['timestamp'] >= 1701086400:
         if enum_name != 'COLLATERALISE':
             if event['args'][user].lower() == user_address:
@@ -115,17 +116,6 @@ def user_data(user_address, events, enum_name):
                 lend_borrow_type_list.append(enum_name)
     # i = 0
 
-    # while i < len(user_address_list):
-    #     print('user: ' + user_address_list[i])
-    #     print('tx_hash: ' + tx_hash_list[i])
-    #     print('timestamp: ' + str(timestamp_list[i]))
-    #     print('token_address: ' + token_address_list[i])
-    #     print('token_volume: ' + str(token_volume_list[i]))
-    #     print('token_usd_amount: ' + str(token_usd_amount_list[i]))
-    #     print('lendBorrowType: ' + lend_borrow_type_list[i])
-    #     print('')
-
-    #     i += 1
 
     df['wallet_address'] = user_address_list
     df['txHash'] = tx_hash_list
@@ -135,6 +125,7 @@ def user_data(user_address, events, enum_name):
     df['tokenUSDAmount'] = token_usd_amount_list
     df['lendBorrowType'] = lend_borrow_type_list
 
+    print('User Data Event Looping done in: ', time.time() - start_time)
     return df
 
 #gets all borrow events
@@ -268,7 +259,7 @@ def get_collateralalise_transactions(user_address, contract):
     return df
 
 #takes in our user address and will populate all the needed fields for our api_response
-@cache
+# @cache
 def get_all_user_transactions(user_address):
 
     df = pd.DataFrame()
