@@ -11,7 +11,7 @@ import time
 app = Flask(__name__)
 
 # Replace with the actual Optimism RPC URL
-optimism_rpc_url = 'infura_key'
+optimism_rpc_url = 'https://linea-mainnet.infura.io/v3/e2b4d9fa19c748489fb6c0d6bf411be4'
 
 # Create a Web3 instance to connect to the Optimism blockchain
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
@@ -400,6 +400,7 @@ def search_and_respond(address, queue):
 @app.route("/test/<address>", methods=["GET"])
 def balance_of(address):
     
+    address = address.lower()
     df = get_all_user_transactions(address)
     # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
 
@@ -425,6 +426,7 @@ def get_transactions():
 
     print(data)
     address = data['address']
+    address = address.lower()
     print(address)
 
     # Create a queue to store the search result
