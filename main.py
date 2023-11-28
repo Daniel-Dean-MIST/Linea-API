@@ -128,6 +128,70 @@ def user_data(user_address, events, enum_name):
     print('User Data Event Looping done in: ', time.time() - start_time)
     return df
 
+#makes our dataframe
+def user_data_2(user_address, events, enum_name):
+    
+    df = pd.DataFrame()
+
+    user_address_list = []
+    tx_hash_list = []
+    timestamp_list = []
+    token_address_list = []
+    token_volume_list = []
+    token_usd_amount_list = []
+    lend_borrow_type_list = []
+
+    user = ''
+
+    i = 1
+    start_time = time.time()
+    print(len(events))
+    for event in events:
+        print(i, '/', len(events), ' events completed')
+        i += 1
+        if enum_name == 'REPAY':
+            user = 'user'
+        elif enum_name == 'COLLATERALISE':
+            user = 'user'
+        else:
+            user = 'onBehalfOf'
+
+        # block = web3.eth.get_block(event['blockNumber'])
+        # if block['timestamp'] >= 1701086400:
+        if enum_name != 'COLLATERALISE':
+            block = web3.eth.get_block(event['blockNumber'])
+
+            user_address_list.append(event['args'][user].lower())
+            tx_hash_list.append(event['transactionHash'].hex())
+            timestamp_list.append(block['timestamp'])
+            token_address_list.append(event['args']['reserve'])
+            token_volume_list.append(event['args']['amount'])
+            token_usd_amount_list.append(get_tx_usd_amount(event['args']['reserve'], (event['args']['amount'])))
+            lend_borrow_type_list.append(enum_name)
+        
+        else:
+            block = web3.eth.get_block(event['blockNumber'])
+
+            user_address_list.append(event['args'][user].lower())
+            tx_hash_list.append(event['transactionHash'].hex())
+            timestamp_list.append(block['timestamp'])
+            token_address_list.append(event['args']['reserve'])
+            token_volume_list.append(0)
+            token_usd_amount_list.append(0)
+            lend_borrow_type_list.append(enum_name)
+
+
+    df['wallet_address'] = user_address_list
+    df['txHash'] = tx_hash_list
+    df['timestamp'] = timestamp_list
+    df['tokenAddress'] = token_address_list
+    df['tokenVolume'] = token_volume_list
+    df['tokenUSDAmount'] = token_usd_amount_list
+    df['lendBorrowType'] = lend_borrow_type_list
+
+    print('User Data Event Looping done in: ', time.time() - start_time)
+    return df
+
 #gets all borrow events
 @cache
 def get_borrow_events(contract):
@@ -179,18 +243,15 @@ def get_borrow_transactions(user_address, contract):
 
     df = pd.DataFrame()
 
-    # latest_block = web3.eth.get_block_number()
-    # from_block = latest_block - 100000
-    # from_block = 0
-
     start_time = time.time()
-    # events = contract.events.Borrow.get_logs(fromBlock=from_block, toBlock='latest')
+
     events = get_borrow_events(contract)
     print('Events found in: ', time.time() - start_time)
 
     if len(events) > 1:
         try:
-            df = user_data(user_address, events, 'BORROW')
+            # df = user_data(user_address, events, 'BORROW')
+            df = user_data_2(user_address, events, 'BORROW')
         except:
             df = pd.DataFrame()
 
@@ -202,16 +263,12 @@ def get_lend_transactions(user_address, contract):
     
     df = pd.DataFrame()
 
-    # latest_block = web3.eth.get_block_number()
-    # from_block = latest_block - 100000
-    # from_block = 0
-
-    # events = contract.events.Deposit.get_logs(fromBlock=from_block, toBlock='latest')
     events = get_lend_events(contract)
 
     if len(events) > 1:
         try:
-            df = user_data(user_address, events, 'LEND')
+            # df = user_data(user_address, events, 'LEND')
+            df = user_data_2(user_address, events, 'LEND')
         except:
             df = pd.DataFrame()
 
@@ -223,17 +280,13 @@ def get_repay_transactions(user_address, contract):
 
     df = pd.DataFrame()
 
-    # latest_block = web3.eth.get_block_number()
-    # from_block = latest_block - 100000
-    # from_block = 0
-
-    # events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
 
     events = get_repay_events(contract)
 
     if len(events) > 1:
         try:
-            df = user_data(user_address, events, 'REPAY')
+            #df = user_data(user_address, events, 'REPAY')
+            df = user_data_2(user_address, events, 'REPAY')
         except:
             df = pd.DataFrame()
     
@@ -243,17 +296,12 @@ def get_repay_transactions(user_address, contract):
 def get_collateralalise_transactions(user_address, contract):
     
     df = pd.DataFrame()
-
-    latest_block = web3.eth.get_block_number()
-    from_block = latest_block - 100000
-    from_block = 0
-
-    # events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=from_block, toBlock='latest')
     
     events = get_collateralise_events(contract)
     if len(events) > 1:
         try:
-            df = user_data(user_address, events, 'COLLATERALISE')
+            # df = user_data(user_address, events, 'COLLATERALISE')
+            df = user_data_2(user_address, events, 'COLLATERALISE')
         except:
             df = pd.DataFrame()
     return df
@@ -335,65 +383,30 @@ def make_api_response_string(df):
 
 # executes all of functions
 def search_and_respond(address, queue):
-    # data = request.get_json()
-    # data = json.loads(request.data)  # Parse JSON string into JSON object
-
-    # print(data)
-    # address = data['address']
-    # print(address)
-
-    # thread = threading.Thread(target=get_all_user_transactions, args=(address,))
-    # thread.start()
 
     df = get_all_user_transactions(address)
-    # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
 
     response = make_api_response_string(df)
 
-
-    # print(type(response))
-    # Return the balance in JSON format
-    # return jsonify(out)
-    # return jsonify(response), 200
-
     queue.put(response)
 
+    make_user_data_csv(df)
     # return response
 
-#get sync processing
-# @app.route("/test/<address>", methods=["GET"])
-# def balance_of(address):
-    
-#     df = get_all_user_transactions(address)
-#     # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
+#just reads from csv file
+def search_and_respond_2(address, queue):
 
-#     response = make_api_response_string(df)
+    df = pd.read_csv('all_events.csv')
 
-#     # print(type(response))
-#     # Return the balance in JSON format
-#     return jsonify(response)
-#     # return json.dumps(response), 200
+    df = df.loc[df['wallet_address'] == address]
 
-#post sync processing
-# @app.route("/transactions/", methods=["POST"])
-# def get_transactions():
-#     # data = request.get_json()
-#     data = json.loads(request.data)  # Parse JSON string into JSON object
+    response = make_api_response_string(df)
 
-#     print(data)
-#     address = data['address']
-#     print(address)
-
-#     df = get_all_user_transactions(address)
-#     # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
-
-#     response = make_api_response_string(df)
-
-
-#     # print(type(response))
-#     # Return the balance in JSON format
-#     # return jsonify(out)
-#     return jsonify(response), 200
+    queue.put(response)
+#makes a dataframe and stores it in a csv file
+def make_user_data_csv(df):
+    df.to_csv('all_events.csv', index=False)
+    return
 
 
 #get v2
@@ -402,7 +415,6 @@ def balance_of(address):
     
     address = address.lower()
     df = get_all_user_transactions(address)
-    # out = df.to_json(orient='records')[1:-1].replace('},{', '} {')
 
     response = make_api_response_string(df)
 
@@ -416,11 +428,29 @@ def balance_of(address):
 
     return jsonify(response), 200
 
+# @app.route("/transactions/", methods=["POST"])
+# def get_transactions():
+
+#     data = json.loads(request.data)  # Parse JSON string into JSON object
+
+#     print(data)
+#     address = data['address']
+#     address = address.lower()
+#     print(address)
+
+#     # Create a queue to store the search result
+#     result_queue = queue.Queue()
+
+#     thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
+#     thread.start()
+    
+#     response = result_queue.get()
+
+#     return jsonify(response), 200
+
+#reads from csv
 @app.route("/transactions/", methods=["POST"])
 def get_transactions():
-
-    # response = search_and_respond()
-    # return response
 
     data = json.loads(request.data)  # Parse JSON string into JSON object
 
@@ -432,12 +462,13 @@ def get_transactions():
     # Create a queue to store the search result
     result_queue = queue.Queue()
 
-    thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
+    thread = threading.Thread(target=search_and_respond_2, args=(address, result_queue))
     thread.start()
     
     response = result_queue.get()
 
     return jsonify(response), 200
+
 
 if __name__ == "__main__":
     app.run()
