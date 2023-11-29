@@ -87,7 +87,7 @@ def user_data(user_address, events, enum_name):
         elif enum_name == 'COLLATERALISE':
             user = 'user'
         else:
-            user = 'onBehalfOf'
+            user = 'user'
 
         # block = web3.eth.get_block(event['blockNumber'])
         # if block['timestamp'] >= 1701086400:
@@ -154,7 +154,7 @@ def user_data_2(user_address, events, enum_name):
         elif enum_name == 'COLLATERALISE':
             user = 'user'
         else:
-            user = 'onBehalfOf'
+            user = 'user'
 
         # block = web3.eth.get_block(event['blockNumber'])
         # if block['timestamp'] >= 1701086400:
