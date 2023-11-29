@@ -485,7 +485,9 @@ def make_user_data_csv(df):
     combined_df = pd.concat(combined_df_list)
     combined_df = combined_df.drop_duplicates()
 
-    if len(combined_df) > len(old_df):
+    # print(df)
+    # print(len(old_df), len(df), len(combined_df))
+    if len(combined_df) > 9000:
         combined_df.to_csv('all_events.csv', index=False)
     return
 
