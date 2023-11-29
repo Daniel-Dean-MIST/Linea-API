@@ -144,8 +144,11 @@ def user_data_2(user_address, events, enum_name):
     user = ''
 
     start_time = time.time()
+    i = 1
     print(len(events))
     for event in events:
+        print(i, '/', len(events))
+        i+=1
         if enum_name == 'REPAY':
             user = 'user'
         elif enum_name == 'COLLATERALISE':
@@ -156,26 +159,49 @@ def user_data_2(user_address, events, enum_name):
         # block = web3.eth.get_block(event['blockNumber'])
         # if block['timestamp'] >= 1701086400:
         if enum_name != 'COLLATERALISE':
-            block = web3.eth.get_block(event['blockNumber'])
+            wallet_address = event['args'][user].lower()
+            tx_hash = event['transactionHash'].hex()
+            token_address = event['args']['reserve']
+            token_volume = event['args']['amount']
+            token_usd_amount = get_tx_usd_amount(event['args']['reserve'], (event['args']['amount']))
 
-            user_address_list.append(event['args'][user].lower())
-            tx_hash_list.append(event['transactionHash'].hex())
-            timestamp_list.append(block['timestamp'])
-            token_address_list.append(event['args']['reserve'])
-            token_volume_list.append(event['args']['amount'])
-            token_usd_amount_list.append(get_tx_usd_amount(event['args']['reserve'], (event['args']['amount'])))
-            lend_borrow_type_list.append(enum_name)
+            input_list = [wallet_address, tx_hash, token_address, token_volume, token_usd_amount, enum_name]
+            exists = already_part_of_df(input_list)
+
+            if exists == False:
+
+                block = web3.eth.get_block(event['blockNumber'])
+
+                user_address_list.append(event['args'][user].lower())
+                tx_hash_list.append(event['transactionHash'].hex())
+                timestamp_list.append(block['timestamp'])
+                token_address_list.append(event['args']['reserve'])
+                token_volume_list.append(event['args']['amount'])
+                token_usd_amount_list.append(get_tx_usd_amount(event['args']['reserve'], (event['args']['amount'])))
+                lend_borrow_type_list.append(enum_name)
         
         else:
-            block = web3.eth.get_block(event['blockNumber'])
+            wallet_address = event['args'][user].lower()
+            tx_hash = event['transactionHash'].hex()
+            token_address = event['args']['reserve']
+            token_volume = event['args']['amount']
+            token_usd_amount = get_tx_usd_amount(event['args']['reserve'], (event['args']['amount']))
 
-            user_address_list.append(event['args'][user].lower())
-            tx_hash_list.append(event['transactionHash'].hex())
-            timestamp_list.append(block['timestamp'])
-            token_address_list.append(event['args']['reserve'])
-            token_volume_list.append(0)
-            token_usd_amount_list.append(0)
-            lend_borrow_type_list.append(enum_name)
+            input_list = [wallet_address, tx_hash, token_address, token_volume, token_usd_amount, enum_name]
+            
+            exists = already_part_of_df(input_list)
+
+            if exists == False:
+
+                block = web3.eth.get_block(event['blockNumber'])
+
+                user_address_list.append(event['args'][user].lower())
+                tx_hash_list.append(event['transactionHash'].hex())
+                timestamp_list.append(block['timestamp'])
+                token_address_list.append(event['args']['reserve'])
+                token_volume_list.append(0)
+                token_usd_amount_list.append(0)
+                lend_borrow_type_list.append(enum_name)
 
 
     df['wallet_address'] = user_address_list
@@ -188,6 +214,23 @@ def user_data_2(user_address, events, enum_name):
 
     print('User Data Event Looping done in: ', time.time() - start_time)
     return df
+
+# will tell us whether we need to find new data
+def already_part_of_df(input_list):
+    does_not_exist = True
+    wallet_address = input_list[0]
+    tx_hash = input_list[1]
+    token_address = input_list[2]
+    # token_volume = input_list[3]
+    # token_usd_amount = input_list[4]
+    lend_borrow_type = input_list[5]
+
+    df = pd.read_csv('all_events.csv')
+
+    if (((df['wallet_address'] == wallet_address) & (df['txHash'] == tx_hash) & (df['tokenAddress'] == token_address) & (df['lendBorrowType'] == lend_borrow_type))).any():
+        does_not_exist = False 
+
+    return does_not_exist
 
 #gets all borrow events
 #@cache
@@ -246,7 +289,7 @@ def get_borrow_transactions(user_address, contract):
     print('Events found in: ', time.time() - start_time)
 
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
+        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2e' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853be':
             try:
                 # df = user_data(user_address, events, 'BORROW')
                 df = user_data_2(user_address, events, 'BORROW')
@@ -411,7 +454,7 @@ def make_api_response_string(df):
 def search_and_respond(address, queue):
 
     df = get_all_user_transactions(address)
-
+    
     response = make_api_response_string(df)
 
     queue.put(response)
@@ -421,7 +464,7 @@ def search_and_respond(address, queue):
 
 #just reads from csv file
 def search_and_respond_2(address, queue):
-
+    
     df = pd.read_csv('all_events.csv')
 
     df = df.loc[df['wallet_address'] == address]
@@ -429,12 +472,21 @@ def search_and_respond_2(address, queue):
     response = make_api_response_string(df)
 
     queue.put(response)
+
+    new_df = get_all_user_transactions(address)
+
+    make_user_data_csv(new_df)
+
 #makes a dataframe and stores it in a csv file
 def make_user_data_csv(df):
     old_df = pd.read_csv('all_events.csv')
 
-    if len(df) > old_df:
-        df.to_csv('all_events.csv', index=False)
+    combined_df_list = [df, old_df]
+    combined_df = pd.concat(combined_df_list)
+    combined_df = combined_df.drop_duplicates()
+
+    if len(combined_df) > len(old_df):
+        combined_df.to_csv('all_events.csv', index=False)
     return
 
 
