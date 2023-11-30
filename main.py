@@ -75,24 +75,12 @@ def user_data(user_address, events, enum_name):
 
     # start_time = time.time()
     for event in events:
-        # print(event)
-        # print(type(event))
-        # print(event.args)
-        # print(event['args'].user)
-        # print(type(event['args'].user))
-        # print(f"Block Number: {event['blockNumber']}:")
-        # print(f"{event['args']['onBehalfOf']}")
-        # if enum_name == 'REPAY':
-        #     user = 'user'
-        # elif enum_name == 'COLLATERALISE':
-        #     user = 'user'
-        # else:
-        #     user = 'user'
+
 
         payload_address = event['args'][user].lower()
         tx_hash = event['transactionHash'].hex()
         
-        if payload_address == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995':
+        if payload_address.lower() == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995'.lower():
             if enum_name == 'LEND' or enum_name == 'BORROW':
                 user = 'onBehalfOf'
                 payload_address = event['args'][user].lower()
