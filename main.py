@@ -71,7 +71,7 @@ def user_data(user_address, events, enum_name):
     token_usd_amount_list = []
     lend_borrow_type_list = []
 
-    user = ''
+    user = 'user'
 
     # start_time = time.time()
     for event in events:
@@ -82,21 +82,31 @@ def user_data(user_address, events, enum_name):
         # print(type(event['args'].user))
         # print(f"Block Number: {event['blockNumber']}:")
         # print(f"{event['args']['onBehalfOf']}")
-        if enum_name == 'REPAY':
-            user = 'user'
-        elif enum_name == 'COLLATERALISE':
-            user = 'user'
-        else:
-            user = 'user'
+        # if enum_name == 'REPAY':
+        #     user = 'user'
+        # elif enum_name == 'COLLATERALISE':
+        #     user = 'user'
+        # else:
+        #     user = 'user'
+
+        payload_address = event['args'][user].lower()
+        tx_hash = event['transactionHash'].hex()
+        
+        if payload_address == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995':
+            if enum_name == 'LEND' or enum_name == 'BORROW':
+                user = 'onBehalfOf'
+                payload_address = event['args'][user].lower()
+            #print(event)
+
 
         # block = web3.eth.get_block(event['blockNumber'])
         # if block['timestamp'] >= 1701086400:
         if enum_name != 'COLLATERALISE':
-            if event['args'][user].lower() == user_address:
+            if payload_address == user_address:
                 block = web3.eth.get_block(event['blockNumber'])
 
-                user_address_list.append(event['args'][user].lower())
-                tx_hash_list.append(event['transactionHash'].hex())
+                user_address_list.append(payload_address)
+                tx_hash_list.append(tx_hash)
                 timestamp_list.append(block['timestamp'])
                 token_address_list.append(event['args']['reserve'])
                 token_volume_list.append(event['args']['amount'])
@@ -127,6 +137,22 @@ def user_data(user_address, events, enum_name):
 
     # print('User Data Event Looping done in: ', time.time() - start_time)
     return df
+
+#handles our weth_gateway events
+def handle_weth_gateway(event, payload_address):
+
+    answer_list = []
+
+    if payload_address == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995':
+        user = 'onBehalfOf'
+    else:
+        user = 'user'
+    
+    new_address = event['args'][user].lower()
+
+    answer_list = [user, new_address]
+    
+    return user
 
 #makes our dataframe
 def user_data_2(user_address, events, enum_name):
@@ -388,21 +414,26 @@ def get_all_user_transactions(user_address):
 
         start_time = time.time()
         borrow_df = get_borrow_transactions(user_address, contract)
+        # print(borrow_df)
         print('Borrower Transactions found in: ', time.time() - start_time)
         start_time = time.time()
         lend_df = get_lend_transactions(user_address, contract)
+        # print(lend_df)
         print('Lend Transactions found in: ', time.time() - start_time)
         start_time = time.time()
         repay_df = get_repay_transactions(user_address, contract)
+        # print(repay_df)
         print('Repay Transactions found in: ', time.time() - start_time)
         start_time = time.time()
         collateralize_df = get_collateralalise_transactions(user_address, contract)
+        # print(collateralize_df)
         print('Collaterise Transactions found in: ', time.time() - start_time)
 
         df_list = [borrow_df, lend_df, repay_df, collateralize_df]
 
         df = pd.concat(df_list)
-
+    
+    print(df)
 
     return df
 
