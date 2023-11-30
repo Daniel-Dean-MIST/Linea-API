@@ -433,7 +433,7 @@ def get_all_user_transactions(user_address):
 
         df = pd.concat(df_list)
     
-    print(df)
+    # print(df)
 
     return df
 
