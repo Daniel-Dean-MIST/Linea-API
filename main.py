@@ -11,7 +11,7 @@ import time
 app = Flask(__name__)
 
 # Replace with the actual Optimism RPC URL
-optimism_rpc_url = 'infura_key'
+optimism_rpc_url = 'https://linea-mainnet.infura.io/v3/e2b4d9fa19c748489fb6c0d6bf411be4'
 
 # Create a Web3 instance to connect to the Optimism blockchain
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
@@ -339,7 +339,7 @@ def get_lend_transactions(user_address, contract):
     events = get_lend_events(contract)
 
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
+        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2e' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853be':
             try:
                 # df = user_data(user_address, events, 'LEND')
                 df = user_data_2(user_address, events, 'LEND')
@@ -364,7 +364,7 @@ def get_repay_transactions(user_address, contract):
     events = get_repay_events(contract)
 
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
+        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2e' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853be':
             try:
                 # df = user_data(user_address, events, 'REPAY')
                 df = user_data_2(user_address, events, 'REPAY')
@@ -386,7 +386,7 @@ def get_collateralalise_transactions(user_address, contract):
     
     events = get_collateralise_events(contract)
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
+        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2e' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853be':
             try:
                 # df = user_data(user_address, events, 'COLLATERALISE')
                 df = user_data_2(user_address, events, 'COLLATERALISE')
@@ -514,11 +514,11 @@ def make_user_data_csv(df):
 
     combined_df_list = [df, old_df]
     combined_df = pd.concat(combined_df_list)
-    combined_df = combined_df.drop_duplicates()
+    combined_df = combined_df.drop_duplicates(subset=['wallet_address', 'txHash', 'lendBorrowType'], keep='last')
 
     # print(df)
     # print(len(old_df), len(df), len(combined_df))
-    if len(combined_df) > 9000:
+    if len(combined_df) > 2500:
         combined_df.to_csv('all_events.csv', index=False)
     return
 
