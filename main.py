@@ -7,6 +7,7 @@ from functools import cache
 import threading 
 import queue
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 
@@ -477,6 +478,8 @@ def search_and_respond(address, queue):
     response = make_api_response_string(df)
 
     queue.put(response)
+
+    queue.join()
 
     make_user_data_csv(df)
     # return response
