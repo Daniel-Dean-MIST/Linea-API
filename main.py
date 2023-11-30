@@ -198,11 +198,8 @@ def user_data_2(user_address, events, enum_name):
         else:
             wallet_address = event['args'][user].lower()
             tx_hash = event['transactionHash'].hex()
-            token_address = event['args']['reserve']
-            token_volume = event['args']['amount']
-            token_usd_amount = get_tx_usd_amount(event['args']['reserve'], (event['args']['amount']))
 
-            input_list = [wallet_address, tx_hash, token_address, token_volume, token_usd_amount, enum_name]
+            input_list = [wallet_address, tx_hash, enum_name]
             
             exists = already_part_of_df(input_list)
 
@@ -210,8 +207,12 @@ def user_data_2(user_address, events, enum_name):
 
                 block = web3.eth.get_block(event['blockNumber'])
 
-                user_address_list.append(event['args'][user].lower())
-                tx_hash_list.append(event['transactionHash'].hex())
+                token_address = event['args']['reserve']
+                token_volume = event['args']['amount']
+                token_usd_amount = get_tx_usd_amount(event['args']['reserve'], (event['args']['amount']))
+
+                user_address_list.append(wallet_address)
+                tx_hash_list.append(tx_hash)
                 timestamp_list.append(block['timestamp'])
                 token_address_list.append(event['args']['reserve'])
                 token_volume_list.append(0)
@@ -231,21 +232,58 @@ def user_data_2(user_address, events, enum_name):
     return df
 
 # will tell us whether we need to find new data
-def already_part_of_df(input_list):
-    does_not_exist = True
-    wallet_address = input_list[0]
-    tx_hash = input_list[1]
-    token_address = input_list[2]
-    # token_volume = input_list[3]
-    # token_usd_amount = input_list[4]
-    lend_borrow_type = input_list[5]
+# returns a list of [tx_hash, wallet_address]
+def already_part_of_df(event, enum, user):
+
+    all_exist = False
+    tx_hash = ''
+    wallet_address = ''
+
+    response_list = [tx_hash, wallet_address]
 
     df = pd.read_csv('all_events.csv')
 
-    if (((df['wallet_address'] == wallet_address) & (df['txHash'] == tx_hash) & (df['tokenAddress'] == token_address) & (df['lendBorrowType'] == lend_borrow_type))).any():
-        does_not_exist = False 
+    tx_hash = tx_hash = event['transactionHash'].hex()
+    tx_hash = tx_hash.lower()
 
-    return does_not_exist
+    tx_exists = tx_hash_exists(df, tx_hash)
+    if tx_exists == True:
+        lend_borrow_type_exists = lend_borrow_type_exists(df, enum)
+        if lend_borrow_type_exists == True:
+            wallet_address = event['args'][user].lower()
+            wallet_exists = wallet_address_exists(df, wallet_address)
+            if wallet_exists == True:
+                all_exist = True
+
+    response_list = [tx_hash, wallet_address, all_exist]
+
+    return response_list
+
+#returns whether a tx exists
+def tx_hash_exists(df, tx_hash):
+    exists = False
+
+    if ((df['txHash'] == tx_hash)).any():
+        exists = True
+    return exists
+
+#returns whether a enum_name exists
+def lend_borrow_type_exists(df, lend_borrow_type):
+    exists = False
+
+    if ((df['lendBorrowType'] == lend_borrow_type)).any():
+        exists = True
+
+    return exists
+
+#returns whether a wallet_address exists
+def wallet_address_exists(df, wallet_address):
+    exists = False
+
+    if ((df['wallet_address'] == wallet_address)).any():
+        exists = True
+
+    return exists
 
 #gets all borrow events
 #@cache
@@ -512,46 +550,6 @@ def make_user_data_csv(df):
     if len(combined_df) > 2500:
         combined_df.to_csv('all_events.csv', index=False)
     return
-
-
-#get v2
-# @app.route("/test/<address>", methods=["GET"])
-# def balance_of(address):
-    
-#     address = address.lower()
-#     df = get_all_user_transactions(address)
-
-#     response = make_api_response_string(df)
-
-#     # Create a queue to store the search result
-#     result_queue = queue.Queue()
-
-#     thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
-#     thread.start()
-    
-#     response = result_queue.get()
-
-#     return jsonify(response), 200
-
-# @app.route("/transactions/", methods=["POST"])
-# def get_transactions():
-
-#     data = json.loads(request.data)  # Parse JSON string into JSON object
-
-#     print(data)
-#     address = data['address']
-#     address = address.lower()
-#     print(address)
-
-#     # Create a queue to store the search result
-#     result_queue = queue.Queue()
-
-#     thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
-#     thread.start()
-    
-#     response = result_queue.get()
-
-#     return jsonify(response), 200
 
 #reads from csv
 @app.route("/transactions/", methods=["POST"])
