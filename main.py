@@ -180,7 +180,12 @@ def user_data_2(user_address, events, enum_name):
             if exists == True:
                 print('Skipped')
 
-            if exists == False:
+            if exists == False and len(wallet_address) < 2:
+                
+                #adds wallet_address if it doesn't exist
+                if len(wallet_address) < 2:
+                    wallet_address = handle_weth_gateway(event, enum_name)
+                
 
                 block = web3.eth.get_block(event['blockNumber'])
 
@@ -205,7 +210,9 @@ def user_data_2(user_address, events, enum_name):
             if exists == True:
                 print('Skipped')
             
-            if exists == False:
+            if exists == False and len(wallet_address) < 2:
+                
+                wallet_address = handle_weth_gateway(event, enum_name)
 
                 block = web3.eth.get_block(event['blockNumber'])
 
@@ -288,7 +295,7 @@ def wallet_address_exists(df, wallet_address):
 # @cache
 def get_borrow_events(contract):
     latest_block = web3.eth.get_block_number()
-    from_block = latest_block - 100000
+    # from_block = latest_block - 100000
     from_block = 0
 
     events = contract.events.Borrow.get_logs(fromBlock=from_block, toBlock='latest')
@@ -299,7 +306,7 @@ def get_borrow_events(contract):
 # @cache
 def get_lend_events(contract):
     latest_block = web3.eth.get_block_number()
-    from_block = latest_block - 100000
+    # from_block = latest_block - 100000
     from_block = 0
 
     events = contract.events.Deposit.get_logs(fromBlock=from_block, toBlock='latest')
@@ -310,7 +317,7 @@ def get_lend_events(contract):
 # @cache
 def get_repay_events(contract):
     latest_block = web3.eth.get_block_number()
-    from_block = latest_block - 100000
+    # from_block = latest_block - 100000
     from_block = 0
 
     events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
@@ -321,7 +328,7 @@ def get_repay_events(contract):
 # @cache
 def get_collateralise_events(contract):
     latest_block = web3.eth.get_block_number()
-    from_block = latest_block - 100000
+    # from_block = latest_block - 100000
     from_block = 0
 
     events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=from_block, toBlock='latest')
