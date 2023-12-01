@@ -128,7 +128,7 @@ def user_data(user_address, events, enum_name):
     return df
 
 #handles our weth_gateway events
-def handle_weth_gateway(event, payload_address):
+def handle_weth_gateway(event, payload_address, enum_name):
 
     answer_list = []
 
@@ -171,17 +171,14 @@ def user_data_2(user_address, events, enum_name):
         else:
             user = 'user'
 
+        user = handle_weth_gateway(event, user_address)
+
         # block = web3.eth.get_block(event['blockNumber'])
         # if block['timestamp'] >= 1701086400:
         if enum_name != 'COLLATERALISE':
-            wallet_address = event['args'][user].lower()
-            tx_hash = event['transactionHash'].hex()
-            token_address = event['args']['reserve']
-            token_volume = event['args']['amount']
-            token_usd_amount = get_tx_usd_amount(event['args']['reserve'], (event['args']['amount']))
+            
+            exists = already_part_of_df(event, enum_name, )
 
-            input_list = [wallet_address, tx_hash, token_address, token_volume, token_usd_amount, enum_name]
-            exists = already_part_of_df(input_list)
 
             if exists == False:
 
