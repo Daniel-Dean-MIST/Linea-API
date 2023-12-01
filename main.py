@@ -128,20 +128,16 @@ def user_data(user_address, events, enum_name):
     return df
 
 #handles our weth_gateway events
-def handle_weth_gateway(event, payload_address, enum_name):
+def handle_weth_gateway(event, enum_name):
 
-    answer_list = []
-
-    if payload_address == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995':
-        user = 'onBehalfOf'
-    else:
-        user = 'user'
+    payload_address = event['args']['user'].lower()
     
-    new_address = event['args'][user].lower()
-
-    answer_list = [user, new_address]
+    if payload_address.lower() == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995'.lower():
+        if enum_name == 'LEND' or enum_name == 'BORROW':
+            user = 'onBehalfOf'
+            payload_address = event['args'][user].lower()
     
-    return user
+    return payload_address
 
 #makes our dataframe
 def user_data_2(user_address, events, enum_name):
