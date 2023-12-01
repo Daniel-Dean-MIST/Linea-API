@@ -131,7 +131,7 @@ def user_data(user_address, events, enum_name):
 def handle_weth_gateway(event, enum_name):
 
     payload_address = event['args']['user'].lower()
-    
+
     if payload_address.lower() == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995'.lower():
         if enum_name == 'LEND' or enum_name == 'BORROW':
             user = 'onBehalfOf'
@@ -160,12 +160,12 @@ def user_data_2(user_address, events, enum_name):
     for event in events:
         print(i, '/', len(events))
         i+=1
-        if enum_name == 'REPAY':
-            user = 'user'
-        elif enum_name == 'COLLATERALISE':
-            user = 'user'
-        else:
-            user = 'user'
+        # if enum_name == 'REPAY':
+        #     user = 'user'
+        # elif enum_name == 'COLLATERALISE':
+        #     user = 'user'
+        # else:
+        #     user = 'user'
 
         # block = web3.eth.get_block(event['blockNumber'])
         # if block['timestamp'] >= 1701086400:
@@ -176,9 +176,6 @@ def user_data_2(user_address, events, enum_name):
             tx_hash = exists_list[0]
             wallet_address = exists_list[1]
             exists = exists_list[2]
-            
-            if exists == True:
-                print('Skipped')
 
             if exists == False and len(wallet_address) < 2:
                 
@@ -198,7 +195,10 @@ def user_data_2(user_address, events, enum_name):
                 token_volume_list.append(token_volume)
                 token_usd_amount_list.append(get_tx_usd_amount(token_address, token_volume))
                 lend_borrow_type_list.append(enum_name)
-        
+            
+            else:
+                print('Skipped')
+
         else:
 
             exists_list = already_part_of_df(event, enum_name)
@@ -206,9 +206,6 @@ def user_data_2(user_address, events, enum_name):
             tx_hash = exists_list[0]
             wallet_address = exists_list[1]
             exists = exists_list[2]
-
-            if exists == True:
-                print('Skipped')
             
             if exists == False and len(wallet_address) < 2:
                 
@@ -223,7 +220,9 @@ def user_data_2(user_address, events, enum_name):
                 token_volume_list.append(0)
                 token_usd_amount_list.append(0)
                 lend_borrow_type_list.append(enum_name)
-
+            
+            else:
+                print('Skipped')
 
     df['wallet_address'] = user_address_list
     df['txHash'] = tx_hash_list
@@ -249,10 +248,16 @@ def already_part_of_df(event, enum):
     tx_hash = event['transactionHash'].hex()
     tx_hash = tx_hash.lower()
 
-    tx_exists = tx_hash_exists(df, tx_hash)
+    # if tx_hash == '0x04db4c43354d51b6f9d724ee718c358398c555692c685c4ad32e489e62889ee7'.lower():
+    #     print(event)
 
-    if tx_exists == True:
-        lbt_exists = lend_borrow_type_exists(df, enum)
+    #     new_df = df.loc[df['txHash'] == tx_hash]
+    #     print(new_df)
+
+    new_df = tx_hash_exists(df, tx_hash)
+
+    if len(new_df) > 0:
+        lbt_exists = lend_borrow_type_exists(new_df, enum)
 
         if lbt_exists == True:
             wallet_address = handle_weth_gateway(event, enum).lower()
@@ -265,13 +270,15 @@ def already_part_of_df(event, enum):
 
     return response_list
 
-#returns whether a tx exists
+#returns a df if a tx_hash exists
 def tx_hash_exists(df, tx_hash):
-    exists = False
+
+    new_df = pd.DataFrame()
 
     if ((df['txHash'] == tx_hash)).any():
-        exists = True
-    return exists
+        new_df = df.loc[df['txHash'] == tx_hash]
+    
+    return new_df
 
 #returns whether a enum_name exists
 def lend_borrow_type_exists(df, lend_borrow_type):
@@ -445,28 +452,30 @@ def get_all_user_transactions(user_address):
     if len(user_address) == 42:
         contract = get_contract()
 
-        start_time = time.time()
-        borrow_df = get_borrow_transactions(user_address, contract)
-        print(borrow_df)
-        make_user_data_csv(borrow_df)
-        print('Borrower Transactions found in: ', time.time() - start_time)
+        # start_time = time.time()
+        # borrow_df = get_borrow_transactions(user_address, contract)
+        # print(borrow_df)
+        # make_user_data_csv(borrow_df)
+        # print('Borrower Transactions found in: ', time.time() - start_time)
         start_time = time.time()
         lend_df = get_lend_transactions(user_address, contract)
         make_user_data_csv(lend_df)
-        # print(lend_df)
+        print(lend_df)
         print('Lend Transactions found in: ', time.time() - start_time)
-        start_time = time.time()
-        repay_df = get_repay_transactions(user_address, contract)
-        make_user_data_csv(repay_df)
+        # start_time = time.time()
+        # repay_df = get_repay_transactions(user_address, contract)
+        # make_user_data_csv(repay_df)
         # print(repay_df)
-        print('Repay Transactions found in: ', time.time() - start_time)
-        start_time = time.time()
-        collateralize_df = get_collateralalise_transactions(user_address, contract)
-        make_user_data_csv(collateralize_df)
+        # print('Repay Transactions found in: ', time.time() - start_time)
+        # start_time = time.time()
+        # collateralize_df = get_collateralalise_transactions(user_address, contract)
+        # make_user_data_csv(collateralize_df)
         # print(collateralize_df)
-        print('Collaterise Transactions found in: ', time.time() - start_time)
+        # print('Collaterise Transactions found in: ', time.time() - start_time)
 
-        df_list = [borrow_df, lend_df, repay_df, collateralize_df]
+        # df_list = [borrow_df, lend_df, repay_df, collateralize_df]
+
+        df_list = [lend_df]
 
         df = pd.concat(df_list)
     
@@ -550,6 +559,7 @@ def search_and_respond_2(address, queue):
 #makes a dataframe and stores it in a csv file
 def make_user_data_csv(df):
     old_df = pd.read_csv('all_events.csv')
+    old_df = old_df.drop_duplicates(subset=['wallet_address', 'txHash', 'lendBorrowType'], keep='last')
 
     combined_df_list = [df, old_df]
     combined_df = pd.concat(combined_df_list)
@@ -557,7 +567,7 @@ def make_user_data_csv(df):
 
     # print(df)
     # print(len(old_df), len(df), len(combined_df))
-    if len(combined_df) > 2500:
+    if len(combined_df) >= len(old_df):
         combined_df.to_csv('all_events.csv', index=False)
         print('CSV Made')
     return
