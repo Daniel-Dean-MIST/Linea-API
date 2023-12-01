@@ -248,8 +248,8 @@ def already_part_of_df(event, enum):
     tx_hash = event['transactionHash'].hex()
     tx_hash = tx_hash.lower()
 
-    # if tx_hash == '0x04db4c43354d51b6f9d724ee718c358398c555692c685c4ad32e489e62889ee7'.lower():
-    #     print(event)
+    if tx_hash == '0x04db4c43354d51b6f9d724ee718c358398c555692c685c4ad32e489e62889ee7'.lower():
+        print(event)
 
     #     new_df = df.loc[df['txHash'] == tx_hash]
     #     print(new_df)
@@ -257,13 +257,13 @@ def already_part_of_df(event, enum):
     new_df = tx_hash_exists(df, tx_hash)
 
     if len(new_df) > 0:
-        lbt_exists = lend_borrow_type_exists(new_df, enum)
+        new_df = lend_borrow_type_exists(new_df, enum)
 
-        if lbt_exists == True:
+        if len(new_df) > 0:
             wallet_address = handle_weth_gateway(event, enum).lower()
-            wallet_exists = wallet_address_exists(df, wallet_address)
+            new_df = wallet_address_exists(df, wallet_address)
 
-            if wallet_exists == True:
+            if len(new_df) > 0:
                 all_exist = True
 
     response_list = [tx_hash, wallet_address, all_exist]
@@ -280,23 +280,27 @@ def tx_hash_exists(df, tx_hash):
     
     return new_df
 
-#returns whether a enum_name exists
+#returns whether a enum_name exists, and returns blank df if not
 def lend_borrow_type_exists(df, lend_borrow_type):
-    exists = False
 
     if ((df['lendBorrowType'] == lend_borrow_type)).any():
-        exists = True
+        df = df.loc[df['lendBorrowType'] == lend_borrow_type]
 
-    return exists
+    else:
+        df = pd.DataFrame()
 
-#returns whether a wallet_address exists
+    return df
+
+#returns df if wallet_address exists
 def wallet_address_exists(df, wallet_address):
-    exists = False
 
     if ((df['wallet_address'] == wallet_address)).any():
-        exists = True
+        df = df.loc[df['wallet_address'] == wallet_address]
 
-    return exists
+    else:
+        df = pd.DataFrame()
+
+    return df
 
 #gets all borrow events
 # @cache
