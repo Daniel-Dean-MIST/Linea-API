@@ -248,9 +248,6 @@ def already_part_of_df(event, enum):
     tx_hash = event['transactionHash'].hex()
     tx_hash = tx_hash.lower()
 
-    if tx_hash == '0x04db4c43354d51b6f9d724ee718c358398c555692c685c4ad32e489e62889ee7'.lower():
-        print(event)
-
     #     new_df = df.loc[df['txHash'] == tx_hash]
     #     print(new_df)
 
