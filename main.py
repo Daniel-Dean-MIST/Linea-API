@@ -456,30 +456,30 @@ def get_all_user_transactions(user_address):
     if len(user_address) == 42:
         contract = get_contract()
 
-        # start_time = time.time()
-        # borrow_df = get_borrow_transactions(user_address, contract)
-        # print(borrow_df)
-        # make_user_data_csv(borrow_df)
-        # print('Borrower Transactions found in: ', time.time() - start_time)
+        start_time = time.time()
+        borrow_df = get_borrow_transactions(user_address, contract)
+        print(borrow_df)
+        make_user_data_csv(borrow_df)
+        print('Borrower Transactions found in: ', time.time() - start_time)
         start_time = time.time()
         lend_df = get_lend_transactions(user_address, contract)
         make_user_data_csv(lend_df)
         print(lend_df)
         print('Lend Transactions found in: ', time.time() - start_time)
-        # start_time = time.time()
-        # repay_df = get_repay_transactions(user_address, contract)
-        # make_user_data_csv(repay_df)
-        # print(repay_df)
-        # print('Repay Transactions found in: ', time.time() - start_time)
-        # start_time = time.time()
-        # collateralize_df = get_collateralalise_transactions(user_address, contract)
-        # make_user_data_csv(collateralize_df)
-        # print(collateralize_df)
-        # print('Collaterise Transactions found in: ', time.time() - start_time)
+        start_time = time.time()
+        repay_df = get_repay_transactions(user_address, contract)
+        make_user_data_csv(repay_df)
+        print(repay_df)
+        print('Repay Transactions found in: ', time.time() - start_time)
+        start_time = time.time()
+        collateralize_df = get_collateralalise_transactions(user_address, contract)
+        make_user_data_csv(collateralize_df)
+        print(collateralize_df)
+        print('Collaterise Transactions found in: ', time.time() - start_time)
 
-        # df_list = [borrow_df, lend_df, repay_df, collateralize_df]
+        df_list = [borrow_df, lend_df, repay_df, collateralize_df]
 
-        df_list = [lend_df]
+        # df_list = [lend_df]
 
         df = pd.concat(df_list)
     
@@ -568,6 +568,9 @@ def make_user_data_csv(df):
     combined_df_list = [df, old_df]
     combined_df = pd.concat(combined_df_list)
     combined_df = combined_df.drop_duplicates(subset=['wallet_address', 'txHash', 'lendBorrowType'], keep='last')
+
+    combined_df['txHash'] = combined_df['txHash'].str.lower()
+    combined_df['tokenAddress'] = combined_df['tokenAddress'].str.lower()
 
     # print(df)
     # print(len(old_df), len(df), len(combined_df))
