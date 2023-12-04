@@ -18,6 +18,10 @@ optimism_rpc_url = 'infura_key'
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
+LATEST_BLOCK = web3.eth.get_block_number()
+FROM_BLOCK = 1070504 - 10000
+# FROM_BLOCK = 0
+
 # Replace with the actual Aave V2 contract address
 # contract_address = "0x871AfF0013bE6218B61b28b274a6F53DB131795F"
 
@@ -85,7 +89,6 @@ def user_data(user_address, events, enum_name):
             if enum_name == 'LEND' or enum_name == 'BORROW':
                 user = 'onBehalfOf'
                 payload_address = event['args'][user].lower()
-            #print(event)
 
 
         # block = web3.eth.get_block(event['blockNumber'])
@@ -160,6 +163,8 @@ def user_data_2(user_address, events, enum_name):
     for event in events:
         print(i, '/', len(events))
         i+=1
+        if i == 10:
+            print('found')
         # if enum_name == 'REPAY':
         #     user = 'user'
         # elif enum_name == 'COLLATERALISE':
@@ -200,7 +205,6 @@ def user_data_2(user_address, events, enum_name):
                 print('Skipped')
 
         else:
-
             exists_list = already_part_of_df(event, enum_name)
 
             tx_hash = exists_list[0]
@@ -247,6 +251,9 @@ def already_part_of_df(event, enum):
 
     tx_hash = event['transactionHash'].hex()
     tx_hash = tx_hash.lower()
+
+    if tx_hash == '0x9c1beebe7f8ad69cf39f82084e7ef67005d3dd7b5fabd0c7fa0647810265c335'.lower():
+        print('found')
 
     #     new_df = df.loc[df['txHash'] == tx_hash]
     #     print(new_df)
@@ -302,44 +309,44 @@ def wallet_address_exists(df, wallet_address):
 #gets all borrow events
 # @cache
 def get_borrow_events(contract):
-    latest_block = web3.eth.get_block_number()
+    # latest_block = web3.eth.get_block_number()
     # from_block = latest_block - 100000
-    from_block = 1047153
+    # from_block = 1052610
 
-    events = contract.events.Borrow.get_logs(fromBlock=from_block, toBlock='latest')
+    events = contract.events.Borrow.get_logs(fromBlock=FROM_BLOCK, toBlock='latest')
 
     return events
 
 #gets all deposit events
 # @cache
 def get_lend_events(contract):
-    latest_block = web3.eth.get_block_number()
+    # latest_block = web3.eth.get_block_number()
     # from_block = latest_block - 100000
-    from_block = 1047153
+    # from_block = 1052610
 
-    events = contract.events.Deposit.get_logs(fromBlock=from_block, toBlock='latest')
+    events = contract.events.Deposit.get_logs(fromBlock=FROM_BLOCK, toBlock='latest')
 
     return events
 
 #gets all repay events
 # @cache
 def get_repay_events(contract):
-    latest_block = web3.eth.get_block_number()
+    # latest_block = web3.eth.get_block_number()
     # from_block = latest_block - 100000
-    from_block = 1047153
+    # from_block = 1052610
 
-    events = contract.events.Repay.get_logs(fromBlock=from_block, toBlock='latest')
+    events = contract.events.Repay.get_logs(fromBlock=FROM_BLOCK, toBlock='latest')
 
     return events
 
 #gets all collateralise events
 # @cache
 def get_collateralise_events(contract):
-    latest_block = web3.eth.get_block_number()
+    # latest_block = web3.eth.get_block_number()
     # from_block = latest_block - 100000
-    from_block = 1047153
+    # from_block = 1052610
 
-    events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=from_block, toBlock='latest')
+    events = contract.events.ReserveUsedAsCollateralEnabled.get_logs(fromBlock=FROM_BLOCK, toBlock='latest')
 
     return events
 
@@ -455,7 +462,7 @@ def get_all_user_transactions(user_address):
 
         start_time = time.time()
         borrow_df = get_borrow_transactions(user_address, contract)
-        print(borrow_df)
+        # print(borrow_df)
         make_user_data_csv(borrow_df)
         print('Borrower Transactions found in: ', time.time() - start_time)
         start_time = time.time()
@@ -466,17 +473,20 @@ def get_all_user_transactions(user_address):
         start_time = time.time()
         repay_df = get_repay_transactions(user_address, contract)
         make_user_data_csv(repay_df)
-        print(repay_df)
+        # print(repay_df)
         print('Repay Transactions found in: ', time.time() - start_time)
         start_time = time.time()
         collateralize_df = get_collateralalise_transactions(user_address, contract)
         make_user_data_csv(collateralize_df)
-        print(collateralize_df)
+        # print(collateralize_df)
         print('Collaterise Transactions found in: ', time.time() - start_time)
 
-        df_list = [borrow_df, lend_df, repay_df, collateralize_df]
+        # properly redoes our collateralizes
+        handle_gateway_collateralise()
 
-        # df_list = [lend_df]
+        # df_list = [borrow_df, lend_df, repay_df, collateralize_df]
+
+        df_list = [lend_df]
 
         df = pd.concat(df_list)
     
@@ -574,6 +584,36 @@ def make_user_data_csv(df):
     if len(combined_df) >= len(old_df):
         combined_df.to_csv('all_events.csv', index=False)
         print('CSV Made')
+    return
+
+#gets rid of weth_gateway_collateralizes
+# adds a collateral row for each lend row for users who have borrowed something
+# removes duplicates
+def handle_gateway_collateralise():
+    df = pd.read_csv('all_events.csv')
+    df['wallet_address'] = df['wallet_address'].str.lower()
+    df['txHash'] = df['txHash'].str.lower()
+
+    df = df[df.wallet_address != '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995']
+
+    lend_df = df.loc[df['lendBorrowType'] == 'LEND']
+
+    borrow_df = df.loc[df['lendBorrowType'] == 'BORROW']
+
+    borrower_wallet_list = borrow_df['wallet_address'].tolist()
+
+    #gives us only wallet addresses that have borrowed something
+    #this means that the user should have 'collateralized' some of their assets to begin with
+    lend_df = lend_df[lend_df['wallet_address'].isin(borrower_wallet_list)]
+
+    collateralize_df = lend_df
+
+    collateralize_df['tokenVolume'] = '0'
+    collateralize_df['tokenUSDAmount'] = 0
+    collateralize_df['lendBorrowType'] = 'COLLATERALISE'
+
+    make_user_data_csv(collateralize_df)
+
     return
 
 #reads from csv
