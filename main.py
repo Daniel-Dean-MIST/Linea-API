@@ -19,7 +19,7 @@ web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 LATEST_BLOCK = web3.eth.get_block_number()
-FROM_BLOCK = 1070504 - 10000
+FROM_BLOCK = 1070504 - 1000
 # FROM_BLOCK = 0
 
 # Replace with the actual Aave V2 contract address
@@ -163,8 +163,6 @@ def user_data_2(user_address, events, enum_name):
     for event in events:
         print(i, '/', len(events))
         i+=1
-        if i == 10:
-            print('found')
         # if enum_name == 'REPAY':
         #     user = 'user'
         # elif enum_name == 'COLLATERALISE':
@@ -251,12 +249,6 @@ def already_part_of_df(event, enum):
 
     tx_hash = event['transactionHash'].hex()
     tx_hash = tx_hash.lower()
-
-    if tx_hash == '0x9c1beebe7f8ad69cf39f82084e7ef67005d3dd7b5fabd0c7fa0647810265c335'.lower():
-        print('found')
-
-    #     new_df = df.loc[df['txHash'] == tx_hash]
-    #     print(new_df)
 
     new_df = tx_hash_exists(df, tx_hash)
 
